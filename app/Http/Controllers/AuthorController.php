@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Author;
+use App\Http\Resources\Author as ResourcesAuthor;
 use App\Traits\ApiResponser;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -10,6 +11,8 @@ use Illuminate\Http\Response;
 class AuthorController extends Controller
 {
     use ApiResponser;
+
+    protected $className = "Authors";
 
     /**
      * Create a new controller instance.
@@ -26,9 +29,13 @@ class AuthorController extends Controller
      */
     public function index()
     {
-        $authors = Author::all();
+        $authors = Author::paginate(5);
 
-        return $this->successResponse($authors);
+        return $this->successResponse(
+            ResourcesAuthor::collection($authors)->response()->getData(true),
+            'Get All ' . $this->className,
+            Response::HTTP_OK
+        );
     }
 
     /**
@@ -45,9 +52,13 @@ class AuthorController extends Controller
 
         $this->validate($request, $rules);
 
-        $authors = Author::create($request->all());
+        $author = Author::create($request->all());
 
-        return $this->successResponse($authors, Response::HTTP_CREATED);
+        return $this->successResponse(
+            new ResourcesAuthor($author),
+            'Success Insert ' . $this->className,
+            Response::HTTP_CREATED
+        );
     }
 
     /**
@@ -58,7 +69,10 @@ class AuthorController extends Controller
     {
         $author = Author::findOrFail($author);
 
-        return $this->successResponse($author);
+        return $this->successResponse(
+            new ResourcesAuthor($author),
+            'Show ' . $this->className
+        );
     }
 
     /**
@@ -84,7 +98,11 @@ class AuthorController extends Controller
         }
         $author->save();
 
-        return $this->successResponse($author); 
+        return $this->successResponse(
+            new ResourcesAuthor($author),
+            'Success Update ' . $this->className,
+            Response::HTTP_CREATED
+        );
     }
 
     /**
@@ -97,6 +115,10 @@ class AuthorController extends Controller
 
         $author->delete();
 
-        return $this->successResponse($author);
+        return $this->successResponse(
+            new ResourcesAuthor($author),
+            'Success Delete ' . $this->className,
+            Response::HTTP_ACCEPTED
+        );
     }
 }
